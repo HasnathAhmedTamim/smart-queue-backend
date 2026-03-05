@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -160,6 +161,29 @@ func (h *QueueHandler) ListServices(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.JSON(w, http.StatusOK, out)
+}
+
+// GET /api/tokens?status=waiting|serving|done&limit=50
+func (h *QueueHandler) ListTokens(w http.ResponseWriter, r *http.Request) {
+	status := r.URL.Query().Get("status")
+	if status == "" {
+		status = "waiting"
+	}
+
+	limit := 50
+	if v := r.URL.Query().Get("limit"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			limit = n
+		}
+	}
+
+	items, err := h.svc.ListTokensByStatus(r.Context(), status, limit)
+	if err != nil {
+		response.Error(w, http.StatusBadRequest, "BAD_REQUEST", err.Error())
+		return
+	}
+
+	response.JSON(w, http.StatusOK, items)
 }
 
 func writeSSE(w http.ResponseWriter, event string, data []byte) {

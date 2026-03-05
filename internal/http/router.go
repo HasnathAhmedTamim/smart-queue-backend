@@ -15,6 +15,7 @@ func NewRouter(q *handlers.QueueHandler, allowedOrigin string) http.Handler {
 	mux.HandleFunc("GET /api/queue", q.QueueStatus)
 	mux.HandleFunc("POST /api/queue/next", q.Next)
 	mux.HandleFunc("GET /api/services", q.ListServices)
+	mux.HandleFunc("GET /api/tokens", q.ListTokens)
 
 	// SSE
 	mux.HandleFunc("GET /api/stream/queue", q.StreamQueue)

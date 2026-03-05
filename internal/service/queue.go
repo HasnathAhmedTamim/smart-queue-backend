@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"time"
+
+	"github.com/hasnathahmedtamim/smart-queue/internal/types"
 )
 
 type QueueService struct {
@@ -158,6 +160,72 @@ func (s *QueueService) ListServices(ctx context.Context) ([]struct {
 			return nil, err
 		}
 		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (s *QueueService) ListTokensByStatus(ctx context.Context, status string, limit int) ([]types.TokenItem, error) {
+	// basic safety
+	if status != "waiting" && status != "serving" && status != "done" {
+		return nil, fmt.Errorf("invalid status")
+	}
+	if limit <= 0 || limit > 200 {
+		limit = 50
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT
+			t.id,
+			t.token_code,
+			s.code,
+			s.name,
+			COALESCE(t.customer_name, ''),
+			t.status,
+			t.created_at,
+			COALESCE(t.served_at, ''),
+			COALESCE(t.done_at, '')
+		FROM tokens t
+		JOIN services s ON s.id = t.service_id
+		WHERE t.status = ?
+		ORDER BY t.id DESC
+		LIMIT ?;
+	`, status, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	out := make([]types.TokenItem, 0, limit)
+	for rows.Next() {
+		var it types.TokenItem
+		var servedAt string
+		var doneAt string
+
+		if err := rows.Scan(
+			&it.ID,
+			&it.TokenCode,
+			&it.ServiceCode,
+			&it.ServiceName,
+			&it.CustomerName,
+			&it.Status,
+			&it.CreatedAt,
+			&servedAt,
+			&doneAt,
+		); err != nil {
+			return nil, err
+		}
+
+		if servedAt != "" {
+			it.ServedAt = servedAt
+		}
+		if doneAt != "" {
+			it.DoneAt = doneAt
+		}
+
+		out = append(out, it)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

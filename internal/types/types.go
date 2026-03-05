@@ -28,3 +28,15 @@ type Service struct {
 	Code string `json:"code"`
 	Name string `json:"name"`
 }
+
+type TokenItem struct {
+	ID           int64  `json:"id"`
+	TokenCode    string `json:"token_code"`
+	ServiceCode  string `json:"service_code"`
+	ServiceName  string `json:"service_name"`
+	CustomerName string `json:"customer_name"`
+	Status       string `json:"status"`
+	CreatedAt    string `json:"created_at"`
+	ServedAt     string `json:"served_at,omitempty"`
+	DoneAt       string `json:"done_at,omitempty"`
+}
