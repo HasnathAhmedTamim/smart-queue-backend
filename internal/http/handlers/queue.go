@@ -142,6 +142,26 @@ func (h *QueueHandler) broadcastQueueUpdate(r *http.Request) {
 	h.hub.Publish(payload)
 }
 
+// GET /api/services
+func (h *QueueHandler) ListServices(w http.ResponseWriter, r *http.Request) {
+	services, err := h.svc.ListServices(r.Context())
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "SERVER_ERROR", err.Error())
+		return
+	}
+
+	// Convert to JSON-friendly slice
+	out := make([]map[string]string, 0, len(services))
+	for _, s := range services {
+		out = append(out, map[string]string{
+			"code": s.Code,
+			"name": s.Name,
+		})
+	}
+
+	response.JSON(w, http.StatusOK, out)
+}
+
 func writeSSE(w http.ResponseWriter, event string, data []byte) {
 	_, _ = w.Write([]byte("event: " + event + "\n"))
 	_, _ = w.Write([]byte("data: "))

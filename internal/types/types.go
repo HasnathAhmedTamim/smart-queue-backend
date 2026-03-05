@@ -22,3 +22,9 @@ type QueueStatusResponse struct {
 type NextResponse struct {
 	CurrentToken string `json:"current_token"`
 }
+
+// Service represents a service (A/D/L)
+type Service struct {
+	Code string `json:"code"`
+	Name string `json:"name"`
+}

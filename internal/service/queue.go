@@ -133,3 +133,34 @@ func (s *QueueService) Next(ctx context.Context) (currentToken string, err error
 
 	return currentToken, tx.Commit()
 }
+
+// ListServices returns all available services (A/D/L)
+func (s *QueueService) ListServices(ctx context.Context) ([]struct {
+	Code string
+	Name string
+}, error) {
+	rows, err := s.db.QueryContext(ctx, `SELECT code, name FROM services ORDER BY code ASC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []struct {
+		Code string
+		Name string
+	}
+	for rows.Next() {
+		var item struct {
+			Code string
+			Name string
+		}
+		if err := rows.Scan(&item.Code, &item.Name); err != nil {
+			return nil, err
+		}
+		out = append(out, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
