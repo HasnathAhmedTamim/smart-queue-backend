@@ -98,16 +98,23 @@ func (h *QueueHandler) Next(w http.ResponseWriter, r *http.Request) {
 
 // GET /api/stream/queue  (SSE)
 func (h *QueueHandler) StreamQueue(w http.ResponseWriter, r *http.Request) {
-	// SSE headers
-	w.Header().Set("Content-Type", "text/event-stream")
-	w.Header().Set("Cache-Control", "no-cache")
+	// SSE headers (important for stability)
+	w.Header().Set("Content-Type", "text/event-stream; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache, no-transform")
 	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
 
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
 		return
 	}
+
+	// Write an initial comment to "open" the stream reliably
+	if _, err := w.Write([]byte(": connected\n\n")); err != nil {
+		return
+	}
+	flusher.Flush()
 
 	// Subscribe client to hub
 	ch := h.hub.Subscribe()
@@ -116,22 +123,28 @@ func (h *QueueHandler) StreamQueue(w http.ResponseWriter, r *http.Request) {
 	// Send initial snapshot
 	cur, waiting, _ := h.svc.QueueStatus(r.Context())
 	initPayload := []byte(fmt.Sprintf(`{"type":"snapshot","current_token":%q,"waiting":%d}`, cur, waiting))
+
 	writeSSE(w, "queue", initPayload)
 	flusher.Flush()
 
-	// Keepalive ping
-	ticker := time.NewTicker(20 * time.Second)
+	// Keepalive ping (more frequent helps prevent disconnects)
+	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-r.Context().Done():
 			return
+
 		case msg := <-ch:
 			writeSSE(w, "queue", msg)
 			flusher.Flush()
+
 		case <-ticker.C:
-			_, _ = w.Write([]byte(": ping\n\n"))
+			// IMPORTANT: if client disconnected, stop writing
+			if _, err := w.Write([]byte(": ping\n\n")); err != nil {
+				return
+			}
 			flusher.Flush()
 		}
 	}

@@ -45,8 +45,9 @@ func main() {
 
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      10 * time.Second,
-		IdleTimeout:       60 * time.Second,
+
+		WriteTimeout: 0, // ✅ SSE needs unlimited write time
+		IdleTimeout:  60 * time.Second,
 	}
 
 	slog.Info("starting server", slog.String("addr", cfg.HTTP.Server.Address))
