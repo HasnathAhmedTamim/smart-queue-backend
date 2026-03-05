@@ -36,7 +36,7 @@ func main() {
 	queueHandler := handlers.NewQueueHandler(queueSvc, cfg.Queue.AdminKey, hub)
 
 	// Router
-	handler := httpserver.NewRouter(queueHandler)
+	handler := httpserver.NewRouter(queueHandler, cfg.CORS.AllowedOrigin)
 
 	// Server
 	srv := &http.Server{

@@ -4,6 +4,9 @@ http:
   server:
     address: "localhost:8080"
 
+cors:
+  allowed_origin: "http://localhost:3000"
+
 storage:
   path: "./queue.db"
 

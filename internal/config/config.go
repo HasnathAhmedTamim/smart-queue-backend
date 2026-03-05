@@ -14,6 +14,7 @@ type Config struct {
 	HTTP    HTTP    `yaml:"http"`
 	Storage Storage `yaml:"storage"`
 	Queue   Queue   `yaml:"queue"`
+	CORS    CORS    `yaml:"cors"`
 }
 
 // HTTP contains the configuration for the HTTP server.
@@ -35,6 +36,10 @@ type Storage struct {
 type Queue struct {
 	AvgServiceMinutes int    `yaml:"avg_service_minutes" env:"AVG_SERVICE_MINUTES" env-default:"3"`
 	AdminKey          string `yaml:"admin_key" env:"ADMIN_KEY" env-required:"true"`
+}
+
+type CORS struct {
+	AllowedOrigin string `yaml:"allowed_origin" env:"CORS_ALLOWED_ORIGIN" env-default:"http://localhost:3000"`
 }
 
 // Load reads the configuration from a YAML file specified by the CONFIG_PATH environment variable or the -config flag, and returns a Config struct.

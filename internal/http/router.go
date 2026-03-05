@@ -7,7 +7,7 @@ import (
 	"github.com/hasnathahmedtamim/smart-queue/internal/http/middleware"
 )
 
-func NewRouter(q *handlers.QueueHandler) http.Handler {
+func NewRouter(q *handlers.QueueHandler, allowedOrigin string) http.Handler {
 	mux := http.NewServeMux()
 
 	// REST
@@ -20,7 +20,7 @@ func NewRouter(q *handlers.QueueHandler) http.Handler {
 
 	// Middleware order: RequestID -> CORS
 	h := middleware.RequestID(mux)
-	h = middleware.CORS("http://localhost:3000")(h)
+	h = middleware.CORS(allowedOrigin)(h)
 
 	return h
 }
