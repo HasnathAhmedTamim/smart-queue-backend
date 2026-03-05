@@ -1,0 +1,12 @@
+env: "local"
+
+http:
+  server:
+    address: "localhost:8080"
+
+storage:
+  path: "./queue.db"
+
+queue:
+  avg_service_minutes: 3
+  admin_key: "dev-admin-key"
